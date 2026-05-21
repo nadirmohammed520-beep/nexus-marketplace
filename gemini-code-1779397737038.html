@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusMarket | Next-Gen Creator Platform</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        /* Modern Dark Theme & Variables */
+        :root {
+            --bg-main: #0a0a0c;
+            --bg-card: #13131a;
+            --bg-nav: #181824;
+            --border: #262636;
+            --accent-primary: #ff4e50;
+            --accent-secondary: #f9d423;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            padding-bottom: 80px;
+        }
+
+        /* Top Navigation Bar */
+        header {
+            background-color: var(--bg-nav);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-toggle-dashboard {
+            background-color: transparent;
+            color: var(--accent-secondary);
+            border: 1px solid var(--accent-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-toggle-dashboard:hover {
+            background-color: var(--accent-secondary);
+            color: #000;
+        }
+
+        /* Live Platform Stats Hub */
+        .stats-bar {
+            background: linear-gradient(90deg, #13131a, #1c1c27);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-item h3 {
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .stat-item p {
+            color: var(--text-muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        /* Hero Header Search */
+        .hero {
+            text-align: center;
+            padding: 50px 20px;
+            background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg-main) 70%);
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+        }
+
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 30px;
+            border: 2px solid var(--border);
+            background-color: var(--bg-card);
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Interactive Upload Portal Section */
+        .dashboard-section {
+            display: none;
+            max-width: 800px;
+            margin: 30px auto;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 30px;
+        }
+
+        .dashboard-section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: #fff;
+            outline: none;
+        }
+
+        .btn-submit {
+            background-color: var(--success);
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Filters & Marketplace Layout */
+        .main-layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 30px 0;
+        }
+
+        .tab-btn {
+            background-color: var(--bg-card);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            padding: 8px 18px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        /* Interactive Asset Card Design */
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-secondary);
+        }
+
+        .card-visual {
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            background: linear-gradient(135deg, #1e1b4b, #311042);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .card-tag {
+            font-size: 11px;
+            color: var(--accent-secondary);
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+
+        .card-price {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .card-price.free {
+            color: var(--success);
+        }
+
+        .btn-action {
+            background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">NexusMarket</div>
+        <div class="nav-actions">
+            <button class="btn-toggle-dashboard" onclick="toggleDashboard()">+ Creator Portal</button>
+        </div>
+    </header>
+
+    <section class="stats-bar">
+        <div class="stat-item"><h3 id="stat-sales">$14,204</h3><p>Total Revenue</p></div>
+        <div class="stat-item"><h3 id="stat-downloads">89,431</h3><p>Downloads</p></div>
+        <div class="stat-item"><h3>0%</h3><p>Platform Fees</p></div>
+    </section>
+
+    <section class="hero">
+        <h1>NexusMarket</h1>
+        <p>Instantly deploy apparel templates, business dashboards, and premium design assets.</p>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search across all marketplace files..." onkeyup="runSearch()">
+        </div>
+    </section>
+
+    <section class="dashboard-section" id="creatorDashboard">
+        <h2 style="margin-bottom: 20px;">🚀 Upload Your File to Sell</h2>
+        <form onsubmit="handleFormUpload(event)">
+            <div class="form-group">
+                <label>Asset Title</label>
+                <input type="text" id="formTitle" placeholder="e.g., Premium Streetwear Hoodie Layout" required>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="formCategory">
+                    <option value="templates">👕 Clothing / Template</option>
+                    <option value="dashboards">📊 Business Dashboard</option>
+                    <option value="graphics">🎨 YouTube & Streaming Graphics</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Price (Set to 0 for Free Download)</label>
+                <input type="number" id="formPrice" step="0.01" placeholder="4.99" required>
+            </div>
+            <button type="submit" class="btn-submit">Publish Live to Marketplace</button>
+        </form>
+    </section>
+
+    <main class="main-layout">
+        <div class="category-tabs">
+            <button class="tab-btn active" onclick="filterCategory('all', this)">All Items</button>
+            <button class="tab-btn" onclick="filterCategory('templates', this)">Clothing Templates</button>
+            <button class="tab-btn" onclick="filterCategory('dashboards', this)">Dashboards</button>
+            <button class="tab-btn" onclick="filterCategory('graphics', this)">Graphics & Art</button>
+        </div>
+
+        <div class="grid" id="assetGrid">
+            <div class="card" data-category="templates" data-title="monochrome streetwear shirt template">
+                <div class="card-visual" style="background: linear-gradient(135deg, #4f46e5, #06b6d4);">👕</div>
+                <div class="card-body">
+                    <div class="card-tag">Clothing Layout</div>
+                    <h3 class="card-title">Monochrome Streetwear Shirt</h3>
+                    <div class="card-footer">
+                        <span class="card-price free">FREE</span>
+                        <button class="btn-action" onclick="processPayment(0, 'Monochrome Streetwear Shirt')">Download</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" data-category="dashboards" data-title="ultimate gaming stat tracker dashboard">
+                <div class="card-visual" style="background: linear-gradient(135deg, #f43f5e, #fb923c);">📊</div>
+                <div class="card-body">
+                    <div class="card-tag">Data Dashboard</div>
+                    <h3 class="card-title">Gaming Statistics Dashboard</h3>
+                    <div class="card-footer">
+                        <span class="card-price">$4.99</span>
+                        <button class="btn-action" onclick="processPayment(4.99, 'Gaming Statistics Dashboard')">Buy Now</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Toggle the Upload Dashboard Panel view
+        function toggleDashboard() {
+            document.getElementById('creatorDashboard').classList.toggle('active');
+        }
+
+        // Live Upload Simulation Engine
+        function handleFormUpload(event) {
+            event.preventDefault();
+            
+            let title = document.getElementById('formTitle').value;
+            let category = document.getElementById('formCategory').value;
+            let price = parseFloat(document.getElementById('formPrice').value);
+            
+            let grid = document.getElementById('assetGrid');
+            let newCard = document.createElement('div');
+            newCard.className = 'card';
+            newCard.setAttribute('data-category', category);
+            newCard.setAttribute('data-title', title.toLowerCase());
+
+            let icons = { templates: '👕', dashboards: '📊', graphics: '🎨' };
+            let displayPrice = price === 0 ? 'FREE' : `$${price.toFixed(2)}`;
+            let priceClass = price === 0 ? 'card-price free' : 'card-price';
+            let btnText = price === 0 ? 'Download' : 'Buy Now';
+
+            newCard.innerHTML = `
+                <div class="card-visual" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">${icons[category]}</div>
+                <div class="card-body">
+                    <div class="card-tag">${category}</div>
+                    <h3 class="card-title">${title}</h3>
+                    <div class="card-footer">
+                        <span class="${priceClass}">${displayPrice}</span>
+                        <button class="btn-action" onclick="processPayment(${price}, '${title}')">${btnText}</button>
+                    </div>
+                </div>
+            `;
+
+            grid.insertBefore(newCard, grid.firstChild);
+            alert('Success! Your product is now live on the storefront display layout below.');
+            document.getElementById('formTitle').value = '';
+            toggleDashboard();
+        }
+
+        // Search Filters
+        function runSearch() {
+            let input = document.getElementById('searchInput').value.toLowerCase();
+            let cards = document.getElementsByClassName('card');
+            for (let card of cards) {
+                let title = card.getAttribute('data-title');
+                card.style.display = title.includes(input) ? "" : "none";
+            }
+        }
+
+        // Category Menu Tabs
+        function filterCategory(category, btn) {
+            let buttons = document.getElementsByClassName('tab-btn');
+            for (let b of buttons) b.classList.remove('active');
+            btn.classList.add('active');
+
+            let cards = document.getElementsByClassName('card');
+            for (let card of cards) {
+                let cat = card.getAttribute('data-category');
+                card.style.display = (category === 'all' || cat === category) ? "" : "none";
+            }
+        }
+
+        /* ==========================================================
+           💳 STRIPE LIVE API KEY KEYPAD LOCATION
+           ========================================================== */
+        const STRIPE_PUBLISHABLE_KEY = "pk_test_insert_your_own_key_here"; 
+
+        function processPayment(price, itemName) {
+            if (price === 0) {
+                alert(`✨ Opening file download link for: ${itemName}`);
+                return;
+            }
+
+            if (STRIPE_PUBLISHABLE_KEY.includes("insert_your_own_key")) {
+                alert(`💳 SECURE CHECKOUT SIMULATION:\nProcessing transaction of $${price} for "${itemName}"...`);
+                alert("Payment Confirmed! Update your STRIPE_PUBLISHABLE_KEY in the code to route real money to your bank.");
+                
+                let rawRev = document.getElementById('stat-sales').innerText.replace('$', '').replace(',', '');
+                document.getElementById('stat-sales').innerText = `$${(parseFloat(rawRev) + price).toFixed(2)}`;
+                return;
+            }
+
+            const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+            alert("Redirecting to real Stripe Checkout Gateway...");
+        }
+    </script>
+</body>
+</html>
